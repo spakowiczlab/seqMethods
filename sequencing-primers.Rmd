@@ -71,23 +71,23 @@ for (l in 1:8) {
 }
 
 d5.plate <- data.frame(
-  primer.name = rep(d5.p$Index.Name, each = 12),
-  location = as.vector(mat),
-  sequence = rep(d5.p$primer, each = 12),
+  Well.Position = as.vector(mat),
+  Sequence.Name = rep(d5.p$Index.Name, each = 12),
+  Sequence = rep(d5.p$primer, each = 12),
   stringsAsFactors = FALSE
 )
   
 d7.plate <- data.frame (
-  primer.name = rep(d7.p$Index.Name, 8),
-  location = as.vector(mat),
-  sequence = rep(d7.p$primer, 8),
+  Well.Position  = as.vector(mat),
+  Sequence.Name  = rep(d7.p$Index.Name, 8),
+  Sequence = rep(d7.p$primer, 8),
   stringsAsFactors = FALSE
 )
 
 idt.plate <- 
   d5.plate %>%
   bind_rows(d7.plate) %>%
-  arrange(location)
+  arrange(Sequence.Name)
 
 write.csv(idt.plate,
       file = "16S_indices_plate-format.csv",

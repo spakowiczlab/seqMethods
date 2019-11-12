@@ -87,7 +87,7 @@ d7.plate <- data.frame (
 idt.plate <- 
   d5.plate %>%
   bind_rows(d7.plate) %>%
-  arrange(Sequence.Name)
+  arrange(Well.Position)
 
 write.csv(idt.plate,
       file = "16S_indices_plate-format.csv",

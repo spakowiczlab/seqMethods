@@ -1,0 +1,65 @@
+---
+title: "Sequencing Primers"
+author: "Dan Spakowicz"
+date: "11/12/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+Primers captured from here: "https://www.nature.com/protocolexchange/system/uploads/6661/original/SupplementaryDocument2-illumina-adapter-sequences-Feb2018.pdf?1530635414"
+
+```{r index adapters}
+# Index 1 (i7) Adapters
+i7 <- "CAAGCAGAAGACGGCATACGAGAT[i7]GTCTCGTGGGCTCGGAGATGTGTATAAGAGACAG"
+
+# Index 2 (i5) Adapters
+i5 <- "AATGATACGGCGACCACCGAGATCTACAC[i5]TCGTCGGCAGCGTCAGATGTGTATAAGAGACAG"
+```
+
+
+
+```{r}
+# Read in seq of insertion sequences
+d7 <- read.csv("D701-12_indices.csv", stringsAsFactors = FALSE)
+
+d7.p <- d7 %>%
+  rename("Index.Name" = "i7.Index.Name") %>%
+  mutate(template = i7) %>%
+  mutate(primer = str_replace(template, "\\[i7\\]", i7.Bases.for.Sample.Sheet)) %>%
+  select(Index.Name, primer)
+
+
+```
+
+
+
+```{r}
+d5 <- read.csv("D501-8_indices.csv", stringsAsFactors = FALSE)
+
+d5.p <- d5 %>%
+  rename("Index.Name" = "i5.Index.Name") %>%
+  mutate(template = i5) %>%
+  mutate(primer = str_replace(string = template, 
+                              pattern = "\\[i5\\]",
+                              replacement = i5.Bases.for.Sample.Sheet.NovaSeq..MiSeq..HiSeq.2000.2500)) %>%
+  select(Index.Name, primer)
+```
+
+
+
+```{r}
+buy.from.idt <- 
+  d7.p %>%
+  bind_rows(d5.p)
+
+write.csv(buy.from.idt, 
+          file = "16S_indices.csv",
+          row.names = FALSE,
+          quote = FALSE)  
+```
+
+

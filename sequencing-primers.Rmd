@@ -62,4 +62,36 @@ write.csv(buy.from.idt,
           quote = FALSE)  
 ```
 
+Create a plate location map for paired primers.
+
+```{r}
+mat <- matrix(NA, nrow = 8, ncol = 12)
+for (l in 1:8) {
+  mat[l,] <- paste0(LETTERS[l], seq(1, 12))
+}
+
+d5.plate <- data.frame(
+  primer.name = rep(d5.p$Index.Name, each = 12),
+  location = as.vector(mat),
+  sequence = rep(d5.p$primer, each = 12),
+  stringsAsFactors = FALSE
+)
+  
+d7.plate <- data.frame (
+  primer.name = rep(d7.p$Index.Name, 8),
+  location = as.vector(mat),
+  sequence = rep(d7.p$primer, 8),
+  stringsAsFactors = FALSE
+)
+
+idt.plate <- 
+  d5.plate %>%
+  bind_rows(d7.plate) %>%
+  arrange(location)
+
+write.csv(idt.plate,
+      file = "16S_indices_plate-format.csv",
+      row.names = FALSE,
+      quote = FALSE)
+```
 

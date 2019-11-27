@@ -8,42 +8,79 @@
 # volumes for creating a 3 nm stock solution for pooling and submission to 
 # the GSR for sequencing
 
+
+# From: Wetzel, Amy <Amy.Wetzel@nationwidechildrens.org> 
+# Sent: Wednesday, November 27, 2019 7:45 AM
+# To: Williams, Nyelia <Nyelia.Williams@osumc.edu>
+#   Subject: RE: Miseq
+# 
+# CAUTION: External Email
+# HI Nyelia,
+# 
+# Please fill out the attached Sample Submission For, as well as dilute your final library pool to 10nM in a volume of >10ul.  
+# 
+# Our hours of operation are 8-4:30pm Mon thru Friday, except tomorrow the lab will be closed for the Holiday.
+# 
+# Best regards,
+# Amy
+
+
 library(tidyverse)
 
-x <- read.csv("QubitData_20-11-2019_00-39-03.csv") %>%
-  arrange(Run.ID)
+# Nanodrop or Qubit measurements
+x <- read_csv("T:/Labs/Spakowicz/data/Atbac-rberry/atbac.rberry16s.csv")
 
-hist(x$Qubit..tube.conc. / x$Original.sample.conc.)
+x %>%
+  ggplot(aes(x = `Nucleic Acid`)) +
+  geom_histogram()
 
-# Clean up the dil factor & sample vol columns
-y <- 
-  x %>%
-  mutate(dil.calc = round((Qubit..tube.conc. / Original.sample.conc.), 0)) %>%
-  mutate(Dilution.Factor = ifelse(dil.calc == 5, 200, 100)) %>%
-  mutate(Sample.Volume..µL. = ifelse(dil.calc == 5, 1, 2))
+
+# Size of the DNA fragments
+dna.size <- 550
 
 # Calculate the concentration in nanomolar
-# g / mol for 500 bp dsDNA from https://www.thermofisher.com/us/en/home/references/ambion-tech-support/rna-tools-and-calculators/dna-and-rna-molecular-weights-and-conversions.html & https://support.illumina.com/bulletins/2016/11/converting-ngl-to-nm-when-calculating-dsdna-library-concentration-.html 
-calc <- 
-  y %>%
-  mutate(nanomolar = Original.sample.conc. / 303858 * 1e6) %>%
-  mutate(vol.samp.for.10ul.3nm = round((30 / nanomolar), 2)) %>%
-  mutate(vol.samp.for.10ul.3nm = ifelse(vol.samp.for.10ul.3nm > 10, 10, 
-                                        vol.samp.for.10ul.3nm)) %>%
-  mutate(vol.water.for.10ul.3nm = 10 - vol.samp.for.10ul.3nm) %>%
-  mutate(vol.samp.for.50ul.3nm = round((150 / nanomolar), 2)) %>%
-  mutate(vol.samp.for.50ul.3nm = ifelse(vol.samp.for.50ul.3nm > 50, 50,
-                                        vol.samp.for.50ul.3nm)) %>%
-  mutate(vol.water.for.50ul.3nm = 50 - vol.samp.for.50ul.3nm) %>%
-  mutate(vol.samp.for.100ul.3nm = round((300 / nanomolar), 2)) %>%
-  mutate(vol.samp.for.100ul.3nm = ifelse(vol.samp.for.100ul.3nm > 100, 100, 
-                                         vol.samp.for.100ul.3nm)) %>%
-  mutate(vol.water.for.100ul.3nm = 100 - vol.samp.for.100ul.3nm) %>%
-  select(Run.ID, nanomolar, contains("vol")) %>%
-  arrange(Run.ID)
+#https://www.thermofisher.com/us/en/home/references/ambion-tech-support/rna-tools-and-calculators/dna-and-rna-molecular-weights-and-conversions.html
+dna.mw <- (dna.size * 607.4) + 157.9
 
-write.csv(calc,
-          paste0("Qubit_dilution_", 
+
+calc <- 
+  x %>%
+  mutate(nanomolar =  `Nucleic Acid` /  dna.mw * 1e6)
+
+calc %>%
+  ggplot(aes(x = nanomolar)) +
+  geom_histogram()
+
+# Set desired concentation
+conc <- 10 # in nanomolar
+
+# Set potential final volumes (determined by ability to pipette)
+final.vol <- c(10, 50, 100) # in ul
+
+# Calculate the volume of water and sample for each volume in `final.vol`
+calc.vol <- list()
+for (f in 1:length(final.vol)) {
+  calc.vol[[f]] <- data.frame(id = calc$`Sample ID`,
+                              nanomolar = calc$nanomolar,
+                              final.concentration = conc,
+                              final.vol = final.vol[f],
+                              vol.sample = round(
+                                (conc * final.vol[f] / calc$nanomolar),
+                                2)
+  )
+  calc.vol[[f]] <- 
+    calc.vol[[f]] %>%
+    mutate(vol.sample = ifelse(vol.sample > final.vol, 
+                               final.vol, vol.sample)) %>%
+    mutate(vol.water = final.vol - vol.sample)
+}
+
+out <- bind_rows(calc.vol) %>%
+  arrange(id)
+    
+
+write.csv(calc.vol,
+          paste0("Library_dilution_", 
                  format(Sys.Date(), "%F"), 
                  ".csv"),
           row.names = FALSE

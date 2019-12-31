@@ -24,12 +24,14 @@
 # Best regards,
 # Amy
 
-
 library(tidyverse)
+library(readxl)
 
 # Nanodrop or Qubit measurements
 x <- read_csv("T:/Labs/Spakowicz/data/Atbac-rberry/atbac.rberry16s.csv")
+# x <- readxl::read_xlsx("T:/Labs/Spakowicz/data/fitness/...")
 
+# Plot the nucleic acid concentrations
 x %>%
   ggplot(aes(x = `Nucleic Acid`)) +
   geom_histogram()
@@ -42,11 +44,12 @@ dna.size <- 550
 #https://www.thermofisher.com/us/en/home/references/ambion-tech-support/rna-tools-and-calculators/dna-and-rna-molecular-weights-and-conversions.html
 dna.mw <- (dna.size * 607.4) + 157.9
 
-
+# Convert nucleic acid in ng/ul to nanomolar (in a new column)
 calc <- 
   x %>%
   mutate(nanomolar =  `Nucleic Acid` /  dna.mw * 1e6)
 
+# Plot a histogram of the nanomolar concentrations
 calc %>%
   ggplot(aes(x = nanomolar)) +
   geom_histogram()
@@ -79,7 +82,7 @@ out <- bind_rows(calc.vol) %>%
   arrange(id)
     
 
-write.csv(calc.vol,
+write.csv(out,
           paste0("Library_dilution_", 
                  format(Sys.Date(), "%F"), 
                  ".csv"),
